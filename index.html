@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultras Lazbakiya - Gestion des Membres</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 24px; color: #1a1a1a; }
+  .container { max-width: 1300px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, #1e3a5f, #2c7be5); color: #fff; padding: 22px 28px; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  header h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
+  .badge { background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; }
+  .card { background: #fff; border-radius: 0 0 10px 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); padding: 24px 28px; margin-bottom: 24px; }
+  .card + .card { border-radius: 10px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .form-grid label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 4px; text-transform: uppercase; }
+  .form-grid input, .form-grid select { width: 100%; padding: 9px 11px; border: 1px solid #ccd2da; border-radius: 6px; font-size: 0.95rem; }
+  .form-grid input:focus, .form-grid select:focus { outline: none; border-color: #2c7be5; box-shadow: 0 0 0 3px rgba(44,123,229,0.15); }
+  .form-grid input[readonly] { background: #eef2f7; cursor: not-allowed; font-weight: 700; color: #1e3a5f; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  button { padding: 10px 22px; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: #2c7be5; color: #fff; }
+  .btn-primary:hover { background: #1a5bbf; }
+  .btn-success { background: #27ae60; color: #fff; }
+  .btn-pdf { background: #e67e22; color: #fff; }
+  .btn-danger { background: #e74c3c; color: #fff; }
+  .btn-logout { background: #6c757d; color: #fff; }
+  .btn-test { background: #8e44ad; color: #fff; }
+  .btn-edit { background: #f39c12; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; }
+  .btn-presence { background: #16a085; color: #fff; }
+  .btn-collect { background: #2980b9; color: #fff; }
+  .search-bar { margin-bottom: 16px; }
+  .search-bar input { width: 100%; padding: 10px 14px; border: 1px solid #ccd2da; border-radius: 6px; font-size: 0.95rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { border: 1px solid #d0d7de; padding: 10px 8px; text-align: left; }
+  th { background: #1e3a5f; color: #fff; font-size: 0.8rem; text-transform: uppercase; position: sticky; top: 0; }
+  tbody tr:nth-child(even) { background: #f8f9fb; }
+  tbody tr:hover { background: #eef4ff; }
+  td.age-cell { font-weight: 700; color: #2c7be5; text-align: center; }
+  .empty { text-align: center; color: #888; font-style: italic; padding: 28px; }
+  .btn-del { background: #e74c3c; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; }
+  .table-wrap { overflow-x: auto; }
+  footer { text-align: center; color: #888; font-size: 0.8rem; margin-top: 16px; }
+  .login-box { max-width: 420px; margin: 80px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.1); text-align: center; }
+  .login-logo { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 4px solid #1e3a5f; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .login-box h2 { margin-top: 0; margin-bottom: 10px; color: #1e3a5f; }
+  .login-box input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccd2da; border-radius: 6px; font-size: 1rem; }
+  .login-box button { width: 100%; }
+  .role-info { background: #d1ecf1; color: #0c5460; padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px; }
+  .hidden { display: none !important; }
+  .status-msg { padding: 12px 16px; border-radius: 6px; margin-bottom: 14px; font-size: 0.9rem; font-weight: 600; }
+  .status-ok { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+  .status-err { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+  .status-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+  .status-warn { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+  .diag-box { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 0.8rem; margin-top: 12px; max-height: 250px; overflow-y: auto; white-space: pre-wrap; }
+  .presence-table th { background: #16a085; }
+  .collect-table th { background: #2980b9; }
+  .presence-table input[type="text"], .collect-table input[type="text"] { width: 100%; padding: 6px 8px; border: 1px solid #ccd2da; border-radius: 4px; font-size: 0.85rem; }
+  .presence-table input[type="checkbox"], .collect-table input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+  .presence-table td, .collect-table td { vertical-align: middle; }
+  .collect-table input[type="number"] { width: 80px; padding: 6px 8px; border: 1px solid #ccd2da; border-radius: 4px; font-size: 0.85rem; }
+  .radio-inline { display: flex; gap: 10px; align-items: center; }
+  .radio-inline label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 0.85rem; }
+  .radio-inline input[type="radio"] { width: 16px; height: 16px; cursor: pointer; }
+  .date-badge { background: #16a085; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin-bottom: 10px; }
+  .date-badge-collect { background: #2980b9; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin-bottom: 10px; }
+  .radio-group { display: flex; gap: 18px; padding: 8px 0; align-items: center; }
+  .radio-group label { display: inline-flex; align-items: center; gap: 6px; text-transform: none; font-weight: 500; color: #333; cursor: pointer; }
+  .radio-group input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
+  .badge-valid { background: #d4edda; color: #155724; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+  .badge-invalid { background: #f8d7da; color: #721c24; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    header, .card:first-of-type, .search-bar, .actions, footer, .no-print, #statusMsg, #diagCard { display: none !important; }
+    .card { box-shadow: none; padding: 0; }
+    table { font-size: 11px; }
+    th, td { border: 1px solid #000 !important; padding: 6px 4px; }
+    th { background: #ddd !important; color: #000 !important; }
+    .print-title { display: block !important; text-align: center; margin-bottom: 14px; font-size: 18px; font-weight: 700; }
+  }
+  .print-title { display: none; }
+  body.print-presence #appScreen > *:not(#presenceCard) { display: none !important; }
+  body.print-presence #presenceCard { display: block !important; box-shadow: none; }
+  body.print-presence #presenceCard .no-print { display: none !important; }
+  body.print-presence #presenceCard .print-title { display: block !important; }
+  body.print-collect #appScreen > *:not(#collectCard) { display: none !important; }
+  body.print-collect #collectCard { display: block !important; box-shadow: none; }
+  body.print-collect #collectCard .no-print { display: none !important; }
+  body.print-collect #collectCard .print-title { display: block !important; }
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-box { background: #fff; padding: 28px; border-radius: 10px; max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; }
+  .modal-box h3 { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<!-- شاشة الدخول -->
+<div id="loginScreen" class="login-box">
+  <!-- LOGO ICI -->
+  <img src="logo.jpg" alt="Logo Ultras Lazbakiya" class="login-logo">
+  <h2>🔐 Ultras Lazbakiya</h2>
+  <p style="color:#666; margin-bottom: 20px;">Entrez le mot de passe pour accéder</p>
+  <input type="password" id="passwordInput" placeholder="Mot de passe" onkeypress="if(event.key==='Enter') login()">
+  <button class="btn-primary" onclick="login()">Se connecter</button>
+  <p id="loginError" style="color:red;text-align:center;font-size:0.85rem;margin-top:10px;"></p>
+  <p style="text-align:center;font-size:0.75rem;color:#999;margin-top:16px;">
+    Mot de passe : amis2024
+  </p>
+</div>
+
+<!-- التطبيق -->
+<div id="appScreen" class="container hidden">
+  <header>
+    <div class="header-left">
+      <!-- LOGO ICI -->
+      <img src="logo.jpg" alt="Logo" class="header-logo">
+      <h1>🏛 Ultras Lazbakiya</h1>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span class="badge" id="compteur">0 membre</span>
+      <span class="badge" id="roleBadge">👀 Lecture seule</span>
+      <button class="btn-logout no-print" onclick="logout()" style="padding:6px 14px;font-size:0.8rem;">Déconnexion</button>
+    </div>
+  </header>
+
+  <div id="statusMsg" class="status-msg hidden"></div>
+
+  <!-- تشخيص -->
+  <div class="card no-print" id="diagCard">
+    <div class="role-info">🔧 Diagnostic — testez la connexion à Firebase</div>
+    <div class="actions">
+      <button class="btn-test" onclick="testerConnexion()">🧪 Tester connexion</button>
+      <button class="btn-test" onclick="testerEcriture()">✍️ Tester écriture</button>
+      <button class="btn-test" onclick="voirDiag()">📋 Voir diagnostic</button>
+    </div>
+    <div id="diagBox" class="diag-box hidden"></div>
+  </div>
+
+  <!-- نموذج الإضافة -->
+  <div class="card" id="adminForm" style="display:none;">
+    <div class="role-info">✏️ Mode administrateur : vous pouvez ajouter, modifier et supprimer des membres.</div>
+    <div class="form-grid">
+      <div>
+        <label for="identifiantLZ">Identifiant LZ (auto)</label>
+        <input type="text" id="identifiantLZ" readonly placeholder="LZ-1">
+      </div>
+      <div><label for="nom">Nom *</label><input type="text" id="nom" placeholder="Ex : Dupont"></div>
+      <div><label for="prenom">Prénom *</label><input type="text" id="prenom" placeholder="Ex : Jean"></div>
+      <div>
+        <label>Type *</label>
+        <div class="radio-group">
+          <label><input type="radio" name="type" value="Validé" checked> Validé</label>
+          <label><input type="radio" name="type" value="Non validé"> Non validé</label>
+        </div>
+      </div>
+      <div><label for="dateNaissance">Date de naissance *</label><input type="date" id="dateNaissance"></div>
+      <div><label for="telephone">Téléphone</label><input type="tel" id="telephone" placeholder="Ex : 06 12 34 56 78"></div>
+      <div><label for="responsabilite">Responsabilité</label><input type="text" id="responsabilite" placeholder="Ex : Président"></div>
+      <div><label for="dateEntree">Date d'entrée</label><input type="date" id="dateEntree"></div>
+      <div><label for="discipline">Discipline (1 / 0 / -1)</label>
+        <select id="discipline"><option value="-1">-1</option><option value="0" selected>0</option><option value="1">1</option></select>
+      </div>
+      <div><label for="adresse">Adresse</label><input type="text" id="adresse" placeholder="Ex : Rue 12, Tunis"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" onclick="ajouterMembre()">➕ Ajouter</button>
+      <button class="btn-success" onclick="exporterCSV()">📊 Export CSV</button>
+      <button class="btn-pdf" onclick="window.print()">🖨 Imprimer / PDF</button>
+      <button class="btn-danger" onclick="toutSupprimer()">🗑 Tout supprimer</button>
+    </div>
+  </div>
+
+  <div class="card" id="viewerInfo" style="display:none;">
+    <div class="role-info">👀 Mode lecture seule : consultation uniquement.</div>
+    <div class="actions">
+      <button class="btn-success" onclick="exporterCSV()">📊 Export CSV</button>
+      <button class="btn-pdf" onclick="window.print()">🖨 Imprimer / PDF</button>
+    </div>
+  </div>
+
+  <!-- الجدول -->
+  <div class="card">
+    <div class="print-title">Liste des Membres - Ultras Lazbakiya</div>
+    <div class="search-bar no-print">
+      <input type="text" id="recherche" placeholder="🔍 Rechercher par nom..." oninput="afficherMembres()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>LZ</th><th>Nom</th><th>Prénom</th><th>Type</th><th>Date naiss.</th><th>Âge</th>
+            <th>Téléphone</th><th>Responsabilité</th><th>Date entrée</th><th>Discipline</th><th>Adresse</th>
+            <th class="no-print admin-only">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="listeMembres"><tr><td colspan="12" class="empty">Chargement...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- زر فتح فضاء الحضور والكوليكت -->
+  <div class="card no-print">
+    <div class="actions">
+      <button class="btn-presence" onclick="ouvrirPresence()">📋 Gestion des Présences (aujourd'hui)</button>
+      <button class="btn-collect" onclick="ouvrirCollect()">📦 Gestion Collect (aujourd'hui)</button>
+    </div>
+  </div>
+
+  <!-- فضاء الحضور -->
+  <div class="card hidden" id="presenceCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <h2 style="margin:0;">📋 Présences du jour</h2>
+      <button class="btn-danger no-print" onclick="fermerPresence()" style="padding:6px 14px;font-size:0.85rem;">✖ Fermer</button>
+    </div>
+    <div class="print-title">Feuille de Présence - Ultras Lazbakiya</div>
+    <div class="date-badge" id="presenceDate"></div>
+    <div class="table-wrap">
+      <table class="presence-table">
+        <thead>
+          <tr>
+            <th>LZ</th><th>Nom</th><th>Prénom</th><th>Présent</th><th>Remarque</th>
+          </tr>
+        </thead>
+        <tbody id="listePresence"></tbody>
+      </table>
+    </div>
+    <div class="actions no-print" style="margin-top:14px;">
+      <button class="btn-success" onclick="sauvegarderPresences()">💾 Enregistrer les présences</button>
+      <button class="btn-pdf" onclick="imprimerPresence()">🖨 Imprimer les présences</button>
+    </div>
+  </div>
+
+  <!-- فضاء Collect -->
+  <div class="card hidden" id="collectCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <h2 style="margin:0;">📦 Collect du jour</h2>
+      <button class="btn-danger no-print" onclick="fermerCollect()" style="padding:6px 14px;font-size:0.85rem;">✖ Fermer</button>
+    </div>
+    <div class="print-title">Feuille de Collect - Ultras Lazbakiya</div>
+    <div class="date-badge-collect" id="collectDate"></div>
+    <div class="table-wrap">
+      <table class="collect-table">
+        <thead>
+          <tr>
+            <th>LZ</th><th>Nom</th><th>Prénom</th><th>Quantité</th><th>Oui / Non</th>
+          </tr>
+        </thead>
+        <tbody id="listeCollect"></tbody>
+      </table>
+    </div>
+    <div class="actions no-print" style="margin-top:14px;">
+      <button class="btn-success" onclick="sauvegarderCollect()">💾 Enregistrer Collect</button>
+      <button class="btn-pdf" onclick="imprimerCollect()">🖨 Imprimer Collect</button>
+    </div>
+  </div>
+
+  <footer>Données synchronisées via Firebase.</footer>
+</div>
+
+<!-- Modal de modification -->
+<div id="editModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3>✏️ Modifier le membre</h3>
+    <div class="form-grid">
+      <div>
+        <label>Identifiant LZ (auto)</label>
+        <input type="text" id="edit_identifiantLZ" readonly>
+      </div>
+      <div><label>Nom *</label><input type="text" id="edit_nom"></div>
+      <div><label>Prénom *</label><input type="text" id="edit_prenom"></div>
+      <div>
+        <label>Type *</label>
+        <div class="radio-group">
+          <label><input type="radio" name="edit_type" value="Validé"> Validé</label>
+          <label><input type="radio" name="edit_type" value="Non validé"> Non validé</label>
+        </div>
+      </div>
+      <div><label>Date de naissance *</label><input type="date" id="edit_dateNaissance"></div>
+      <div><label>Téléphone</label><input type="tel" id="edit_telephone"></div>
+      <div><label>Responsabilité</label><input type="text" id="edit_responsabilite"></div>
+      <div><label>Date d'entrée</label><input type="date" id="edit_dateEntree"></div>
+      <div><label>Discipline (1 / 0 / -1)</label>
+        <select id="edit_discipline"><option value="-1">-1</option><option value="0">0</option><option value="1">1</option></select>
+      </div>
+      <div><label>Adresse</label><input type="text" id="edit_adresse"></div>
+    </div>
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn-primary" onclick="validerModification()">💾 Enregistrer</button>
+      <button class="btn-logout" onclick="fermerModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, remove, set, update, get }
+  from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBTgchRTnUi7z9jbGtyaJzV0WSGC4Kc_kY",
+  authDomain: "lazbakiya.firebaseapp.com",
+  databaseURL: "https://lazbakiya-default-rtdb.firebaseio.com/",
+  projectId: "lazbakiya",
+  storageBucket: "lazbakiya.firebasestorage.app",
+  messagingSenderId: "518338564729",
+  appId: "1:518338564729:web:02bc1dc8e424cedfd87aa8"
+};
+
+let app = null, db = null, membresRef = null, presencesRef = null, collectRef = null;
+const logs = [];
+const STORAGE_KEY = 'membres_lazbakiya_local';
+
+function log(msg, type = 'info') {
+  const time = new Date().toLocaleTimeString();
+  const line = `[${time}] ${msg}`;
+  logs.push(line);
+  console.log(line);
+  const box = document.getElementById('diagBox');
+  if (box) { box.classList.remove('hidden'); box.textContent = logs.join('\n'); box.scrollTop = box.scrollHeight; }
+}
+
+try {
+  log("🚀 Initialisation Firebase...");
+  app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+  membresRef = ref(db, 'membres');
+  presencesRef = ref(db, 'presences');
+  collectRef = ref(db, 'collect');
+  log("✅ Firebase initialisé : " + firebaseConfig.databaseURL);
+} catch (e) {
+  log("❌ ERREUR INIT : " + e.message, 'err');
+}
+
+const ADMIN_PASSWORD = "admin2024";
+const VIEWER_PASSWORD = "amis2024";
+
+let isAdmin = false;
+let membres = [];
+let listenerActif = false;
+let presenceOuverte = false;
+let collectOuverte = false;
+let membreEnEdition = null;
+let presencesDuJour = {};
+let collectDuJour = {};
+let renumDejaFaite = false;
+
+function sauvegarderLocal() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(membres)); } catch(e){}
+}
+function chargerLocal() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){ return []; }
+}
+membres = chargerLocal();
+
+window.afficherStatus = function(msg, type = 'ok') {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status-msg status-' + type;
+  el.classList.remove('hidden');
+  if (type === 'ok' || type === 'info') setTimeout(() => el.classList.add('hidden'), 5000);
+};
+
+window.login = function() {
+  const pwd = document.getElementById('passwordInput').value;
+  if (pwd === ADMIN_PASSWORD) isAdmin = true;
+  else if (pwd === VIEWER_PASSWORD) isAdmin = false;
+  else {
+    document.getElementById('loginError').textContent = '❌ Mot de passe incorrect';
+    return;
+  }
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  document.getElementById('roleBadge').textContent = isAdmin ? '✏️ Admin' : '👀 Lecture seule';
+  document.getElementById('adminForm').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('viewerInfo').style.display = isAdmin ? 'none' : 'block';
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  ecouterMembres();
+  afficherMembres();
+  mettreAJourIdentifiantAuto();
+};
+
+window.logout = function() { location.reload(); };
+
+function ecouterMembres() {
+  if (listenerActif || !membresRef) return;
+  listenerActif = true;
+  log("👂 Écoute Firebase...");
+  afficherStatus('🔄 Connexion à Firebase...', 'info');
+
+  const timeout = setTimeout(() => {
+    log("⚠️ Pas de réponse de Firebase après 8 secondes. Utilisation du cache local.", 'warn');
+    afficherStatus('⚠️ Firebase ne répond pas — données locales affichées', 'warn');
+    afficherMembres();
+    mettreAJourIdentifiantAuto();
+  }, 8000);
+
+  onValue(membresRef, (snapshot) => {
+    clearTimeout(timeout);
+    membres = [];
+    snapshot.forEach(child => {
+      membres.push({ id: child.key, ...child.val() });
+    });
+    log("📥 Membres reçus : " + membres.length);
+
+    if (!renumDejaFaite) {
+      renumDejaFaite = true;
+      renumotererMembres().then(() => {
+        sauvegarderLocal();
+        afficherMembres();
+        mettreAJourIdentifiantAuto();
+        if (presenceOuverte) afficherPresence();
+        if (collectOuverte) afficherCollect();
+      });
+    } else {
+      sauvegarderLocal();
+      afficherMembres();
+      mettreAJourIdentifiantAuto();
+      if (presenceOuverte) afficherPresence();
+      if (collectOuverte) afficherCollect();
+    }
+
+    if (membres.length === 0) afficherStatus('ℹ️ Aucun membre. Ajoutez-en un !', 'info');
+    else afficherStatus('✅ ' + membres.length + ' membre(s) synchronisé(s)', 'ok');
+  }, (err) => {
+    clearTimeout(timeout);
+    log("❌ ERREUR LECTURE : " + err.message, 'err');
+    afficherStatus('❌ Firebase : ' + err.message + ' — cache local utilisé', 'err');
+    afficherMembres();
+    mettreAJourIdentifiantAuto();
+  });
+}
+
+function calculerAge(dateStr) {
+  if (!dateStr) return '-';
+  const n = new Date(dateStr), a = new Date();
+  let age = a.getFullYear() - n.getFullYear();
+  const m = a.getMonth() - n.getMonth();
+  if (m < 0 || (m === 0 && a.getDate() < n.getDate())) age--;
+  return age;
+}
+function echapper(t) {
+  const d = document.createElement('div');
+  d.textContent = t == null ? '' : t;
+  return d.innerHTML;
+}
+function normaliser(t) {
+  return String(t == null ? '' : t)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+function dateAujourdhui() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function estMineur(dateNaissance) {
+  const age = calculerAge(dateNaissance);
+  return typeof age === 'number' && age < 18;
+}
+function typeAuto(m) {
+  if (estMineur(m.dateNaissance)) return 'Non validé';
+  return m.type || 'Validé';
+}
+
+async function renumotererMembres() {
+  if (!membres.length) return;
+  membres.sort((a, b) => {
+    const da = a.dateEntree && a.dateEntree !== '-' ? a.dateEntree : '9999-99-99';
+    const db_ = b.dateEntree && b.dateEntree !== '-' ? b.dateEntree : '9999-99-99';
+    if (da !== db_) return da.localeCompare(db_);
+    const na = parseInt((a.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    const nb = parseInt((b.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    if (na !== nb) return na - nb;
+    return (a.nom || '').localeCompare(b.nom || '');
+  });
+
+  const updates = {};
+  let aCorriger = false;
+  membres.forEach((m, idx) => {
+    const nouveauLZ = 'LZ-' + (idx + 1);
+    const nouveauType = typeAuto(m);
+    if (m.identifiantLZ !== nouveauLZ || m.type !== nouveauType) {
+      aCorriger = true;
+      m.identifiantLZ = nouveauLZ;
+      m.type = nouveauType;
+      if (m.id && !m.id.startsWith('local_')) {
+        updates['membres/' + m.id + '/identifiantLZ'] = nouveauLZ;
+        updates['membres/' + m.id + '/type'] = nouveauType;
+      }
+    }
+  });
+
+  if (aCorriger && db) {
+    try {
+      await Promise.race([
+        update(ref(db), updates),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout 5s')), 5000))
+      ]);
+      log("✅ Renumérotation LZ + types corrigés (" + membres.length + " membres)");
+      afficherStatus('✅ LZ renumérotés de LZ-1 à LZ-' + membres.length, 'ok');
+    } catch (e) {
+      log("⚠️ Renumérotation Firebase échouée : " + e.message, 'warn');
+    }
+  }
+}
+
+function prochainIdentifiantLZ() {
+  let max = 0;
+  membres.forEach(m => {
+    if (m.identifiantLZ && /^LZ-\d+$/.test(m.identifiantLZ)) {
+      const n = parseInt(m.identifiantLZ.replace('LZ-', ''), 10);
+      if (n > max) max = n;
+    }
+  });
+  return 'LZ-' + (max + 1);
+}
+
+function mettreAJourIdentifiantAuto() {
+  const champ = document.getElementById('identifiantLZ');
+  if (champ) champ.value = prochainIdentifiantLZ();
+}
+
+window.ajouterMembre = async function() {
+  log("➕ Ajout...");
+  if (!isAdmin) { alert('Réservé à l\'administrateur.'); return; }
+  if (!membresRef) { alert('Firebase non initialisé. Vérifiez F12.'); return; }
+
+  const identifiantLZ = prochainIdentifiantLZ();
+  const nom = document.getElementById('nom').value.trim();
+  const prenom = document.getElementById('prenom').value.trim();
+  let type = document.querySelector('input[name="type"]:checked')?.value || 'Validé';
+  const dateNaissance = document.getElementById('dateNaissance').value;
+
+  if (!nom || !prenom || !dateNaissance) {
+    log("❌ Champs obligatoires vides", 'err');
+    afficherStatus('⚠️ Remplissez Nom, Prénom et Date de naissance.', 'warn');
+    alert('Champs obligatoires : Nom, Prénom, Date de naissance.');
+    return;
+  }
+
+  if (estMineur(dateNaissance)) {
+    type = 'Non validé';
+    afficherStatus('⚠️ Membre de moins de 18 ans → "Non validé".', 'warn');
+  }
+
+  const nouveau = {
+    id: 'local_' + Date.now(),
+    identifiantLZ, nom, prenom, type, dateNaissance,
+    telephone: document.getElementById('telephone').value.trim() || '-',
+    responsabilite: document.getElementById('responsabilite').value.trim() || '-',
+    dateEntree: document.getElementById('dateEntree').value || '-',
+    discipline: document.getElementById('discipline').value,
+    adresse: document.getElementById('adresse').value.trim() || '-'
+  };
+
+  membres.push(nouveau);
+  sauvegarderLocal();
+  afficherMembres();
+  mettreAJourIdentifiantAuto();
+  afficherStatus('⏳ Envoi à Firebase...', 'info');
+  log("📤 Envoi à Firebase : " + JSON.stringify(nouveau));
+
+  try {
+    const result = await Promise.race([
+      push(membresRef, nouveau),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout 10s — Firebase ne répond pas')), 10000))
+    ]);
+    log("✅ SUCCÈS Firebase, clé = " + result.key);
+    nouveau.id = result.key;
+    sauvegarderLocal();
+    afficherStatus('✅ Membre ' + identifiantLZ + ' ajouté et synchronisé !', 'ok');
+  } catch (e) {
+    log("❌ ÉCHEC : " + e.message, 'err');
+    afficherStatus('⚠️ Ajouté localement, mais échec Firebase : ' + e.message, 'warn');
+  }
+
+  ['nom','prenom','dateNaissance','telephone','responsabilite','dateEntree','adresse']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('discipline').value = '0';
+  document.querySelector('input[name="type"][value="Validé"]').checked = true;
+  document.getElementById('nom').focus();
+  mettreAJourIdentifiantAuto();
+};
+
+window.ouvrirModal = function(id) {
+  if (!isAdmin) { alert('Réservé à l\'administrateur.'); return; }
+  const m = membres.find(x => x.id === id);
+  if (!m) return;
+  membreEnEdition = id;
+  document.getElementById('edit_identifiantLZ').value = m.identifiantLZ || '';
+  document.getElementById('edit_nom').value = m.nom || '';
+  document.getElementById('edit_prenom').value = m.prenom || '';
+  const typeVal = typeAuto(m);
+  document.querySelector(`input[name="edit_type"][value="${typeVal}"]`).checked = true;
+  document.getElementById('edit_dateNaissance').value = m.dateNaissance || '';
+  document.getElementById('edit_telephone').value = (m.telephone && m.telephone !== '-') ? m.telephone : '';
+  document.getElementById('edit_responsabilite').value = (m.responsabilite && m.responsabilite !== '-') ? m.responsabilite : '';
+  document.getElementById('edit_dateEntree').value = (m.dateEntree && m.dateEntree !== '-') ? m.dateEntree : '';
+  document.getElementById('edit_discipline').value = m.discipline || '0';
+  document.getElementById('edit_adresse').value = (m.adresse && m.adresse !== '-') ? m.adresse : '';
+  document.getElementById('editModal').classList.remove('hidden');
+};
+
+window.fermerModal = function() {
+  document.getElementById('editModal').classList.add('hidden');
+  membreEnEdition = null;
+};
+
+window.validerModification = async function() {
+  if (!membreEnEdition) return;
+  const identifiantLZ = document.getElementById('edit_identifiantLZ').value.trim();
+  const nom = document.getElementById('edit_nom').value.trim();
+  const prenom = document.getElementById('edit_prenom').value.trim();
+  let type = document.querySelector('input[name="edit_type"]:checked')?.value || 'Validé';
+  const dateNaissance = document.getElementById('edit_dateNaissance').value;
+  if (!nom || !prenom || !dateNaissance) {
+    alert('Champs obligatoires : Nom, Prénom, Date de naissance.');
+    return;
+  }
+  if (estMineur(dateNaissance)) {
+    type = 'Non validé';
+    afficherStatus('⚠️ Membre de moins de 18 ans → "Non validé" appliqué.', 'warn');
+  }
+  const modifs = {
+    identifiantLZ, nom, prenom, type, dateNaissance,
+    telephone: document.getElementById('edit_telephone').value.trim() || '-',
+    responsabilite: document.getElementById('edit_responsabilite').value.trim() || '-',
+    dateEntree: document.getElementById('edit_dateEntree').value || '-',
+    discipline: document.getElementById('edit_discipline').value,
+    adresse: document.getElementById('edit_adresse').value.trim() || '-'
+  };
+  const id = membreEnEdition;
+  const idx = membres.findIndex(m => m.id === id);
+  if (idx >= 0) { membres[idx] = { ...membres[idx], ...modifs }; sauvegarderLocal(); afficherMembres(); }
+  fermerModal();
+  afficherStatus('⏳ Mise à jour...', 'info');
+  if (membresRef && !id.startsWith('local_')) {
+    try {
+      await update(ref(db, 'membres/' + id), modifs);
+      log("✅ Modifié : " + id);
+      afficherStatus('✅ Membre modifié et synchronisé !', 'ok');
+    } catch (e) {
+      log("❌ Modification Firebase : " + e.message, 'err');
+      afficherStatus('⚠️ Modifié localement, échec Firebase : ' + e.message, 'warn');
+    }
+  } else {
+    afficherStatus('✅ Membre modifié localement (non synchronisé, id local).', 'warn');
+  }
+};
+
+window.supprimerMembre = async function(id) {
+  if (!isAdmin) { alert('Réservé à l\'administrateur.'); return; }
+  if (!confirm('Supprimer ce membre ?')) return;
+  membres = membres.filter(m => m.id !== id);
+  sauvegarderLocal();
+  afficherMembres();
+  mettreAJourIdentifiantAuto();
+  if (membresRef && !id.startsWith('local_')) {
+    try { await remove(ref(db, 'membres/' + id)); log("🗑 Supprimé : " + id); }
+    catch(e) { log("❌ Suppression Firebase : " + e.message, 'err'); }
+  }
+  afficherStatus('✅ Membre supprimé', 'ok');
+};
+
+window.toutSupprimer = async function() {
+  if (!isAdmin) { alert('Réservé à l\'administrateur.'); return; }
+  if (membres.length === 0) return;
+  if (!confirm('Supprimer TOUS les membres ?')) return;
+  membres = [];
+  sauvegarderLocal();
+  afficherMembres();
+  mettreAJourIdentifiantAuto();
+  if (membresRef) {
+    try { await set(membresRef, null); log("🗑 Liste vidée"); }
+    catch(e) { log("❌ Vidage Firebase : " + e.message, 'err'); }
+  }
+  afficherStatus('✅ Liste vidée', 'ok');
+};
+
+function afficherMembres() {
+  const tbody = document.getElementById('listeMembres');
+  const r = normaliser(document.getElementById('recherche').value);
+
+  let liste = membres.map(m => ({
+    ...m,
+    age: calculerAge(m.dateNaissance),
+    type: typeAuto(m)
+  }));
+
+  if (r) {
+    liste = liste.filter(m => {
+      const nomComplet = normaliser((m.nom || '') + ' ' + (m.prenom || ''));
+      const prenomNom = normaliser((m.prenom || '') + ' ' + (m.nom || ''));
+      const nomSeul = normaliser(m.nom);
+      const prenomSeul = normaliser(m.prenom);
+      if (nomComplet.includes(r) || prenomNom.includes(r) ||
+          nomSeul.includes(r) || prenomSeul.includes(r)) return true;
+      const autres = [m.identifiantLZ, m.type, m.dateNaissance, String(m.age),
+        m.telephone, m.responsabilite, m.dateEntree, String(m.discipline), m.adresse]
+        .map(normaliser).join(' ');
+      return autres.includes(r);
+    });
+  }
+
+  liste.sort((a, b) => {
+    const na = parseInt((a.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    const nb = parseInt((b.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    return na - nb;
+  });
+
+  document.getElementById('compteur').textContent =
+    membres.length + (membres.length > 1 ? ' membres' : ' membre');
+
+  if (liste.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12" class="empty">Aucun membre enregistré.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = liste.map(m => {
+    const typeBadge = (m.type === 'Non validé')
+      ? '<span class="badge-invalid">Non validé</span>'
+      : '<span class="badge-valid">Validé</span>';
+    return `
+    <tr>
+      <td><strong>${echapper(m.identifiantLZ)}</strong></td>
+      <td>${echapper(m.nom)}</td>
+      <td>${echapper(m.prenom)}</td>
+      <td>${typeBadge}</td>
+      <td>${m.dateNaissance}</td>
+      <td class="age-cell">${m.age} ans</td>
+      <td>${echapper(m.telephone)}</td>
+      <td>${echapper(m.responsabilite)}</td>
+      <td>${m.dateEntree}</td>
+      <td style="text-align:center;font-weight:700;">${m.discipline}</td>
+      <td>${echapper(m.adresse)}</td>
+      <td class="no-print admin-only" style="display:${isAdmin?'':'none'};white-space:nowrap;">
+        <button class="btn-edit" onclick="ouvrirModal('${m.id}')">Modifier</button>
+        <button class="btn-del" onclick="supprimerMembre('${m.id}')">Suppr.</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.ouvrirPresence = function() {
+  presenceOuverte = true;
+  document.getElementById('presenceCard').classList.remove('hidden');
+  document.getElementById('presenceDate').textContent = '📅 ' + new Date().toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  afficherPresence();
+  document.getElementById('presenceCard').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.fermerPresence = function() {
+  presenceOuverte = false;
+  document.getElementById('presenceCard').classList.add('hidden');
+};
+
+async function chargerPresencesDuJour() {
+  const date = dateAujourdhui();
+  presencesDuJour = {};
+  if (!presencesRef) return;
+  try {
+    const snap = await get(ref(db, 'presences/' + date));
+    if (snap.exists()) presencesDuJour = snap.val() || {};
+  } catch (e) {
+    log("⚠️ Lecture présences échouée : " + e.message, 'warn');
+  }
+}
+
+async function afficherPresence() {
+  const tbody = document.getElementById('listePresence');
+  if (!membres.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Aucun membre.</td></tr>';
+    return;
+  }
+  await chargerPresencesDuJour();
+  const liste = [...membres].sort((a, b) => {
+    const na = parseInt((a.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    const nb = parseInt((b.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    return na - nb;
+  });
+  tbody.innerHTML = liste.map(m => {
+    const p = presencesDuJour[m.id] || {};
+    const present = p.present ? 'checked' : '';
+    const remarque = echapper(p.remarque || '');
+    return `<tr data-membre-id="${m.id}">
+      <td><strong>${echapper(m.identifiantLZ || '-')}</strong></td>
+      <td>${echapper(m.nom)}</td>
+      <td>${echapper(m.prenom)}</td>
+      <td style="text-align:center;"><input type="checkbox" class="presence-check" ${present}></td>
+      <td><input type="text" class="presence-remarque" value="${remarque}" placeholder="Remarque..."></td>
+    </tr>`;
+  }).join('');
+}
+
+window.sauvegarderPresences = async function() {
+  const date = dateAujourdhui();
+  const rows = document.querySelectorAll('#listePresence tr[data-membre-id]');
+  const data = {};
+  rows.forEach(tr => {
+    const id = tr.getAttribute('data-membre-id');
+    const present = tr.querySelector('.presence-check').checked;
+    const remarque = tr.querySelector('.presence-remarque').value.trim();
+    data[id] = { present, remarque, date };
+  });
+  presencesDuJour = data;
+  if (!presencesRef) { afficherStatus('⚠️ Firebase non initialisé.', 'warn'); return; }
+  try {
+    await set(ref(db, 'presences/' + date), data);
+    log("✅ Présences sauvegardées pour " + date);
+    afficherStatus('✅ Présences enregistrées pour ' + date + ' (nouvel enregistrement)', 'ok');
+  } catch (e) {
+    log("❌ Sauvegarde présences : " + e.message, 'err');
+    afficherStatus('❌ Échec sauvegarde : ' + e.message, 'err');
+  }
+};
+
+window.imprimerPresence = function() {
+  document.body.classList.add('print-presence');
+  window.print();
+  setTimeout(() => document.body.classList.remove('print-presence'), 500);
+};
+
+window.ouvrirCollect = function() {
+  collectOuverte = true;
+  document.getElementById('collectCard').classList.remove('hidden');
+  document.getElementById('collectDate').textContent = '📅 ' + new Date().toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  afficherCollect();
+  document.getElementById('collectCard').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.fermerCollect = function() {
+  collectOuverte = false;
+  document.getElementById('collectCard').classList.add('hidden');
+};
+
+async function chargerCollectDuJour() {
+  const date = dateAujourdhui();
+  collectDuJour = {};
+  if (!collectRef) return;
+  try {
+    const snap = await get(ref(db, 'collect/' + date));
+    if (snap.exists()) collectDuJour = snap.val() || {};
+  } catch (e) {
+    log("⚠️ Lecture collect échouée : " + e.message, 'warn');
+  }
+}
+
+async function afficherCollect() {
+  const tbody = document.getElementById('listeCollect');
+  if (!membres.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Aucun membre.</td></tr>';
+    return;
+  }
+  await chargerCollectDuJour();
+  const liste = [...membres].sort((a, b) => {
+    const na = parseInt((a.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    const nb = parseInt((b.identifiantLZ || '').replace('LZ-', ''), 10) || 9999;
+    return na - nb;
+  });
+  tbody.innerHTML = liste.map(m => {
+    const c = collectDuJour[m.id] || {};
+    const quantite = c.quantite != null ? c.quantite : '';
+    const oui = (c.oui === true) ? 'checked' : '';
+    const non = (c.oui === false) ? 'checked' : '';
+    return `<tr data-membre-id="${m.id}">
+      <td><strong>${echapper(m.identifiantLZ || '-')}</strong></td>
+      <td>${echapper(m.nom)}</td>
+      <td>${echapper(m.prenom)}</td>
+      <td><input type="number" class="collect-quantite" value="${quantite}" min="0" placeholder="0"></td>
+      <td>
+        <div class="radio-inline">
+          <label><input type="radio" name="oui_${m.id}" class="collect-oui" value="oui" ${oui}> Oui</label>
+          <label><input type="radio" name="oui_${m.id}" class="collect-non" value="non" ${non}> Non</label>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.sauvegarderCollect = async function() {
+  const date = dateAujourdhui();
+  const rows = document.querySelectorAll('#listeCollect tr[data-membre-id]');
+  const data = {};
+  rows.forEach(tr => {
+    const id = tr.getAttribute('data-membre-id');
+    const quantiteRaw = tr.querySelector('.collect-quantite').value.trim();
+    const quantite = quantiteRaw === '' ? 0 : parseInt(quantiteRaw, 10);
+    const ouiChecked = tr.querySelector('.collect-oui').checked;
+    const nonChecked = tr.querySelector('.collect-non').checked;
+    const oui = ouiChecked ? true : (nonChecked ? false : null);
+    data[id] = { quantite, oui, date };
+  });
+  collectDuJour = data;
+  if (!collectRef) { afficherStatus('⚠️ Firebase non initialisé.', 'warn'); return; }
+  try {
+    await set(ref(db, 'collect/' + date), data);
+    log("✅ Collect sauvegardé pour " + date);
+    afficherStatus('✅ Collect enregistré pour ' + date + ' (nouvel enregistrement)', 'ok');
+  } catch (e) {
+    log("❌ Sauvegarde collect : " + e.message, 'err');
+    afficherStatus('❌ Échec sauvegarde collect : ' + e.message, 'err');
+  }
+};
+
+window.imprimerCollect = function() {
+  document.body.classList.add('print-collect');
+  window.print();
+  setTimeout(() => document.body.classList.remove('print-collect'), 500);
+};
+
+window.testerConnexion = function() {
+  log("🧪 Test connexion...");
+  if (!membresRef) { log("❌ Firebase non initialisé", 'err'); return; }
+  const t = setTimeout(() => log("⚠️ Timeout 8s lecture", 'warn'), 8000);
+  onValue(membresRef, (snap) => {
+    clearTimeout(t);
+    const n = snap.exists() ? Object.keys(snap.val()).length : 0;
+    log("✅ Connexion OK — " + n + " membre(s) dans Firebase");
+    afficherStatus('✅ Connexion Firebase OK (' + n + ' membres)', 'ok');
+  }, { onlyOnce: true });
+};
+
+window.testerEcriture = async function() {
+  log("✍️ Test écriture...");
+  if (!db) { log("❌ Firebase non initialisé", 'err'); return; }
+  try {
+    const result = await Promise.race([
+      push(ref(db, 'test'), { msg: "test " + new Date().toISOString(), ts: Date.now() }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout 10s')), 10000))
+    ]);
+    log("✅ Écriture OK — clé " + result.key);
+    afficherStatus('✅ Écriture Firebase OK !', 'ok');
+    setTimeout(() => remove(ref(db, 'test/' + result.key)).catch(()=>{}), 3000);
+  } catch (e) {
+    log("❌ Écriture échouée : " + e.message, 'err');
+    afficherStatus('❌ Écriture échouée : ' + e.message, 'err');
+  }
+};
+
+window.voirDiag = function() {
+  document.getElementById('diagBox').classList.toggle('hidden');
+};
+
+window.exporterCSV = function() {
+  if (membres.length === 0) { alert('Aucun membre.'); return; }
+  const entetes = ['Identifiant LZ','Nom','Prénom','Type','Date naissance','Âge','Téléphone','Responsabilité','Date entrée','Discipline','Adresse'];
+  const lignes = [entetes.join(';')];
+  membres.forEach(m => {
+    lignes.push([m.identifiantLZ, m.nom, m.prenom, typeAuto(m), m.dateNaissance, calculerAge(m.dateNaissance),
+      m.telephone, m.responsabilite, m.dateEntree, m.discipline, m.adresse]
+      .map(v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`).join(';'));
+  });
+  const blob = new Blob(['\ufeff' + lignes.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'membres_ultras_lazbakiya.csv';
+  a.click();
+};
+
+log("✅ Script prêt.");
+</script>
+</body>
+</html>
